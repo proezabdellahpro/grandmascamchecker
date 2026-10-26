@@ -25,10 +25,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Build APK
-        working-directory: GrandmaGuardianAndroid-GitHubBuild
-        run: |
-          chmod +x gradlew || true
-          gradle assembleDebug
+        run: gradle -p "$GITHUB_WORKSPACE/GrandmaGuardianAndroid-GitHubBuild" --settings-file "$GITHUB_WORKSPACE/GrandmaGuardianAndroid-GitHubBuild/settings.gradle" assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
