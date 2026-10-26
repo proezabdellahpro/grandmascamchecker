@@ -27,9 +27,10 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
-
+          
       - name: Build APK
-        run: gradle -p GrandmaGuardianAndroid-GitHubBuild assembleDebug
+        working-directory: GrandmaGuardianAndroid-GitHubBuild
+        run: gradle --settings-file settings.gradle assembleDebug 
 
       - name: Save APK
         uses: actions/upload-artifact@v4
