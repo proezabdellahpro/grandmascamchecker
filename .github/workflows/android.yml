@@ -30,8 +30,14 @@ jobs:
           
       
       - name: Build APK
-        working-directory: GrandmaGuardianAndroid-GitHubBuild
-        run: gradle assembleDebug
+        run: |
+          echo "Checking Android project files..."
+          ls -la "$GITHUB_WORKSPACE/GrandmaGuardianAndroid-GitHubBuild"
+          test -f "$GITHUB_WORKSPACE/GrandmaGuardianAndroid-GitHubBuild/settings.gradle"
+          gradle \
+            --project-dir "$GITHUB_WORKSPACE/GrandmaGuardianAndroid-GitHubBuild" \
+            --settings-file "$GITHUB_WORKSPACE/GrandmaGuardianAndroid-GitHubBuild/settings.gradle" \
+            assembleDebug
 
 
       - name: Save APK
