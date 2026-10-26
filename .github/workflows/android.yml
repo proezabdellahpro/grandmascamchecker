@@ -30,19 +30,12 @@ jobs:
           
       
       - name: Build APK
-        run: |
-          echo "Checking Android project files..."
-          ls -la "$GITHUB_WORKSPACE/GrandmaGuardianAndroid-GitHubBuild"
-          test -f "$GITHUB_WORKSPACE/GrandmaGuardianAndroid-GitHubBuild/settings.gradle"
-          gradle \
-            --project-dir "$GITHUB_WORKSPACE/GrandmaGuardianAndroid-GitHubBuild" \
-            --settings-file "$GITHUB_WORKSPACE/GrandmaGuardianAndroid-GitHubBuild/settings.gradle" \
-            assembleDebug
+        run: gradle -p "$GITHUB_WORKSPACE/GrandmaGuardianAndroid-GitHubBuild/GrandmaGuardianAndroid" assembleDebug
+
 
 
       - name: Save APK
         uses: actions/upload-artifact@v4
         with:
           name: Grandma-Guardian-APK
-          path: GrandmaGuardianAndroid-GitHubBuild/app/build/outputs/apk/debug/*.apk
-
+          path: GrandmaGuardianAndroid-GitHubBuild/GrandmaGuardianAndroid/app/build/outputs/apk/debug/*.apk
