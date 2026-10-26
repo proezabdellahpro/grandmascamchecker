@@ -176,51 +176,49 @@ public class MainActivity extends Activity {
     }
 
     void buildPatterns() {
+        // Phrase-based, multilingual indicators. These are clues, not proof by themselves.
         patterns.put("money", new String[]{
-            "send money","transfer money","pay now","make a payment","payment required",
-            "argent","envoyez de l'argent","virement","paiement urgent","فلوس","صيفط الفلوس",
-            "حول الفلوس","خلص دابا","sift flous","sift lia flous","7wel flous"
+            "send money","transfer money","pay now","make a payment","payment required","wire money","pay the fee",
+            "argent","envoyez de l'argent","envoie de l'argent","virement","paiement urgent","frais a payer","payer maintenant",
+            "فلوس","صيفط الفلوس","حول الفلوس","خلص دابا","sift flous","sift lia flous","seft lia flous","7wel flous","kheless daba"
         });
         patterns.put("account", new String[]{
-            "bank account","account details","bank details","your account will be blocked",
-            "compte bancaire","coordonnees bancaires","ton compte","حسابك البنكي",
-            "معلومات الحساب","عطيني الكونط","3tini countek","atini countek","a3tini comptek"
+            "bank account","account details","bank details","banking details","your bank account","your account number","account number","routing number","sort code","iban","swift code","bank login",
+            "compte bancaire","conte bancaire","coordonnees bancaires","informations bancaires","releve bancaire","numero de compte","rib","votre compte bancaire","identifiants bancaires",
+            "حسابك البنكي","معلومات الحساب","رقم الحساب","المعلومات البنكية","رقم البطاقة البنكية","عطيني الكونط","الكونط البنكي",
+            "3tini countek","atini countek","a3tini comptek","3tini conte bancaire","conte bancaire dyalek","compte bancaire dyalek","rib dyalek","rib dyalek","lcompte dyalek","l compte dyalek","numero de compte dyalek"
         });
         patterns.put("send", new String[]{
-            "send me","send it to me","transfer to me","forward the code","envoyez moi",
-            "envoie moi","transferez","صيفط ليا","رسل ليا","حول ليا","sift liya","seft liya"
+            "send me","send it to me","transfer to me","forward the code","send your","give me your","tell me your","share your details","send your details","send the details","send me your bank","envoyez moi","envoie moi","donne moi","donnez moi","transferez","envoyez vos coordonnees","envoyez votre rib","donne moi ton rib",
+            "صيفط ليا","رسل ليا","حول ليا","عطيني","اعطني","أرسل لي","اعطيني","sift liya","seft liya","3tini","3tini lia","3tini liya","a3tini","atini","3afak 3tini","3fak 3tini","3afak sift lia"
         });
         patterns.put("credential", new String[]{
-            "password","passcode","one time password","one-time code","verification code",
-            "security code","otp","pin code","card number","mot de passe","code de verification",
-            "كلمة السر","رمز التحقق","كود التحقق","رقم البطاقة","password dyalek","code dyalek"
+            "password","passcode","one time password","one-time code","verification code","security code","otp","pin code","card number","cvv","mot de passe","code de verification","code confidentiel","code sms","code recu par sms","identifiant et mot de passe",
+            "كلمة السر","كلمة المرور","رمز التحقق","كود التحقق","رمز التأكيد","رقم البطاقة","الرقم السري","كود sms","password dyalek","code dyalek","mot de passe dyalek","code sms"
         });
         patterns.put("prize", new String[]{
-            "you have won","you won a prize","claim your prize","claim your reward",
-            "free gift card","lottery winner","vous avez gagne","reclamez votre prix",
-            "ربحت جائزة","ربحتي","مبروك ربحت","rbe7ti","rb7ti"
+            "you have won","you won a prize","claim your prize","claim your reward","free gift card","lottery winner","you are the winner","claim your gift","vous avez gagne","reclamez votre prix","vous avez ete selectionne","cadeau gratuit",
+            "ربحت جائزة","ربحتي","مبروك ربحت","ربحت هدية","rbe7ti","rb7ti","rbe7ti prix","rb7ti cadeau"
         });
         patterns.put("urgency", new String[]{
-            "act now","within 24 hours","account will be closed","account will be blocked",
-            "immediately","urgent action required","de toute urgence","tout de suite",
-            "votre compte sera bloque","دابا حالا","خاصك دابا","ضروري دابا","daba","dghya","darori daba"
+            "act now","within 24 hours","account will be closed","account will be blocked","immediately","urgent action required","verify immediately","final warning","de toute urgence","tout de suite","votre compte sera bloque","votre compte sera suspendu","action immediate",
+            "دابا حالا","خاصك دابا","ضروري دابا","حسابك غادي يتسد","daba","dghya","darori daba","7ta lyoum","qbel maytsed comptek"
         });
         patterns.put("secrecy", new String[]{
-            "don't tell anyone","do not tell anyone","keep this secret","keep it between us",
-            "ne le dites a personne","garde le secret","ما تقول لحتى واحد","خليها سر","matgol lta wa7ed"
+            "don't tell anyone","do not tell anyone","keep this secret","keep it between us","do not share this","ne le dites a personne","garde le secret","ne dites rien a personne",
+            "ما تقول لحتى واحد","خليها سر","matgol lta wa7ed","matgol l7ed","khalliha sir"
         });
         patterns.put("remote", new String[]{
-            "install anydesk","install teamviewer","give me remote access","share your screen",
-            "remote control","acces a distance","prenez le controle","تحكم عن بعد","شارك الشاشة"
+            "install anydesk","install teamviewer","give me remote access","share your screen","remote control","access a distance","prenez le controle","installez anydesk","installez teamviewer",
+            "تحكم عن بعد","شارك الشاشة","installe anydesk","installi anydesk"
         });
         patterns.put("linkAction", new String[]{
-            "click here to verify","click the link to claim","open this link to unlock",
-            "cliquez ici pour verifier","ouvrez ce lien","اضغط هنا للتحقق","دخل للرابط"
+            "click here to verify","click the link to claim","open this link to unlock","enter your details at","verify your account here","cliquez ici pour verifier","ouvrez ce lien","confirmez votre compte via le lien",
+            "اضغط هنا للتحقق","دخل للرابط","dkhol l lien","d5ol l lien","clique sur le lien"
         });
         patterns.put("impersonation", new String[]{
-            "i am from your bank","this is your bank","bank security team","government agent",
-            "police officer","customer service agent","je suis de votre banque","service client de votre banque",
-            "انا من البنك","خدمة الزبناء ديال البنك","ana mn banka"
+            "i am from your bank","this is your bank","bank security team","government agent","police officer","customer service agent","your bank called","je suis de votre banque","service client de votre banque","conseiller bancaire","support officiel de votre banque",
+            "انا من البنك","خدمة الزبناء ديال البنك","موظف البنك","ana mn banka","ana men banka","service client dyal banka"
         });
     }
 
@@ -258,12 +256,26 @@ public class MainActivity extends Activity {
         if (phone(text)) found.add("phone");
 
         int s = 0;
+        String darijaInput = normalizeArabizi(text);
+        boolean asksForBankData = (has(text, "conte bancaire", "compte bancaire", "bank account", "bank details", "coordonnees bancaires", "informations bancaires", "rib", "حسابك البنكي", "معلومات الحساب", "رقم الحساب")
+                || has(darijaInput, "conte bancaire", "compte bancaire", "rib dyalek", "lcompte dyalek"));
+        boolean directRequest = has(text, "3tini", "3fak 3tini", "3afak 3tini", "donne moi", "donnez moi", "give me", "send me", "share your", "envoyez moi", "envoie moi", "عطيني", "اعطني", "أرسل لي");
         Map<String,Integer> base = new HashMap<>();
         base.put("money",12); base.put("account",18); base.put("send",10);
         base.put("credential",22); base.put("prize",12); base.put("urgency",12);
         base.put("secrecy",10); base.put("remote",24); base.put("linkAction",14);
         base.put("impersonation",16); base.put("url",5); base.put("phone",3);
         for (String k : found) s += base.getOrDefault(k,0);
+
+        // A request for bank details is high risk even if the wording is misspelled or transliterated.
+        if (asksForBankData && directRequest) {
+            s += 58;
+            found.add("account");
+            found.add("send");
+        } else if (asksForBankData) {
+            s += 24;
+            found.add("account");
+        }
 
         // Stronger evidence comes from combinations, not ordinary words in isolation.
         if (found.contains("account") && found.contains("send")) s += 22;
