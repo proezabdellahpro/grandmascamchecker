@@ -8,21 +8,19 @@ import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.*;
-import java.util.*;
-import java.util.regex.*;
 import java.text.Normalizer;
+import java.util.*;
+import java.util.regex.Pattern;
 
 public class MainActivity extends Activity {
-
     LinearLayout root, resultBox;
     Spinner language;
     EditText message;
     TextView risk, score, explanation, detected, reasons;
     Button check;
 
-    final String[] langs = {"🇫🇷 Français", "🇸🇦 العربية", "🇲🇦 Darija"};
-
-    final Map<String, String[]> patterns = new HashMap<>();
+    final String[] langs = {"🇬🇧 English", "🇫🇷 Français", "🇸🇦 العربية", "🇲🇦 Darija"};
+    final Map<String, String[]> patterns = new LinkedHashMap<>();
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -47,6 +45,10 @@ public class MainActivity extends Activity {
         return b;
     }
 
+    String tr(String en, String fr, String ar, String da, int lang) {
+        return lang == 0 ? en : lang == 1 ? fr : lang == 2 ? ar : da;
+    }
+
     void buildUI() {
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -62,19 +64,18 @@ public class MainActivity extends Activity {
         title.setGravity(Gravity.CENTER);
         content.addView(title);
 
-        TextView subtitle = tv("Protection contre les arnaques et les demandes suspectes.", 15);
+        TextView subtitle = tv("Offline scam-message checker", 15);
         subtitle.setGravity(Gravity.CENTER);
         content.addView(subtitle);
 
         language = new Spinner(this);
-        language.setAdapter(new ArrayAdapter<String>(
-                this, android.R.layout.simple_spinner_dropdown_item, langs));
+        language.setAdapter(new ArrayAdapter<String>(this,
+                android.R.layout.simple_spinner_dropdown_item, langs));
         content.addView(language, new LinearLayout.LayoutParams(-1, 58));
 
         message = new EditText(this);
         message.setTextSize(18);
         message.setGravity(Gravity.TOP | Gravity.START);
-        message.setHint("Collez ici un message reçu...");
         message.setMinHeight(250);
         message.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
         message.setBackgroundColor(Color.WHITE);
@@ -82,7 +83,7 @@ public class MainActivity extends Activity {
         message.setHintTextColor(Color.GRAY);
         content.addView(message);
 
-        check = button("🔎 Analyser le message");
+        check = button("🔎 Check message");
         content.addView(check);
 
         resultBox = new LinearLayout(this);
@@ -90,73 +91,72 @@ public class MainActivity extends Activity {
         resultBox.setPadding(16,16,16,16);
         resultBox.setBackgroundColor(Color.rgb(34,34,34));
 
-        risk = tv("Risque faible", 26);
+        risk = tv("Low risk", 26);
         risk.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        score = tv("Points de risque : 0", 18);
+        score = tv("Risk score: 0/100", 18);
         explanation = tv("", 16);
         detected = tv("", 16);
         reasons = tv("", 16);
-
         resultBox.addView(risk);
         resultBox.addView(score);
         resultBox.addView(explanation);
         resultBox.addView(detected);
         resultBox.addView(reasons);
-
         content.addView(resultBox);
-        TextView note = tv("Grandma Guardian 1.0 • analyse locale • fonctionne hors ligne", 12);
+
+        TextView note = tv("Grandma Guardian • offline analysis • no message is uploaded", 12);
         note.setGravity(Gravity.CENTER);
         content.addView(note);
 
         check.setOnClickListener(v -> analyze());
-
         language.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onNothingSelected(AdapterView<?> p) {}
             public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
                 updateLanguage(pos);
+                if (pos >= 2) root.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+                else root.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
             }
         });
-
         scroll.addView(content);
         setContentView(scroll);
+        updateLanguage(0);
     }
 
     void updateLanguage(int lang) {
-        if (lang == 0) {
-            message.setHint("Collez ici un message reçu...");
-            check.setText("🔎 Analyser le message");
-            root.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
-        } else if (lang == 1) {
-            message.setHint("ألصق الرسالة هنا...");
-            check.setText("🔎 فحص الرسالة");
-            root.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
-        } else {
-            message.setHint("لسق الميساج هنا...");
-            check.setText("🔎 فحص الميساج");
-            root.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
-        }
+        message.setHint(tr("Paste a message you received here...",
+                "Collez ici un message reçu...", "ألصق الرسالة التي وصلتك هنا...", "لسق هنا الميساج اللي وصلك...", lang));
+        check.setText(tr("🔎 Check message", "🔎 Analyser le message", "🔎 فحص الرسالة", "🔎 فحص الميساج", lang));
+        risk.setText(tr("Not checked yet", "Pas encore analysé", "لم يتم الفحص بعد", "مازال ما تفحصش", lang));
+        score.setText(tr("Risk score: 0/100", "Points de risque : 0/100", "نقط الخطر: 0/100", "نقط الخطر: 0/100", lang));
+        explanation.setText("");
+        detected.setText("");
+        reasons.setText(tr("Tip: never share passwords or one-time codes.", 
+                "Conseil : ne partagez jamais un mot de passe ou un code à usage unique.",
+                "نصيحة: لا تشارك كلمة السر أو رمز التحقق لمرة واحدة.",
+                "نصيحة: ما تعطيش كلمة السر ولا كود التحقق لشي واحد.", lang));
     }
 
     String normalize(String s) {
-        s = s.toLowerCase(Locale.ROOT);
-        s = Normalizer.normalize(s, Normalizer.Form.NFKC);
+        s = Normalizer.normalize(s.toLowerCase(Locale.ROOT), Normalizer.Form.NFKC);
+        s = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}+", "");
         s = s.replace('أ','ا').replace('إ','ا').replace('آ','ا')
-             .replace('ى','ي').replace('ئ','ي').replace('ؤ','و').replace('ة','ه');
-        s = s.replace('ـ',' ');
-        s = s.replace('3','ع').replace('7','ح').replace('9','ق')
-             .replace('5','خ').replace('6','ط').replace('8','غ').replace('2','ء');
-        s = s.replaceAll("[\\p{Punct}_]+", " ");
-        s = s.replaceAll("\\s+", " ").trim();
-        s = s.replaceAll("(.)\\1{2,}", "$1$1");
-        return s;
+             .replace('ى','ي').replace('ئ','ي').replace('ؤ','و').replace('ة','ه').replace('ـ',' ');
+        s = s.replaceAll("[^\\p{L}\\p{N}]+", " ");
+        return s.replaceAll("\\s+", " ").trim();
+    }
+
+    String normalizeArabizi(String s) {
+        return normalize(s).replace("3","ع").replace("7","ح").replace("9","ق")
+                .replace("5","خ").replace("6","ط").replace("8","غ").replace("2","ء");
     }
 
     boolean has(String text, String... terms) {
-        String n = normalize(text);
-        String compact = n.replace(" ","");
-        for (String t : terms) {
-            String p = normalize(t);
-            if (n.contains(p) || compact.contains(p.replace(" ",""))) return true;
+        String n = " " + normalize(text) + " ";
+        String arabizi = " " + normalizeArabizi(text) + " ";
+        for (String term : terms) {
+            String p = normalize(term);
+            if (p.isEmpty()) continue;
+            if (n.contains(" " + p + " ") || arabizi.contains(" " + normalizeArabizi(term) + " ")) return true;
         }
         return false;
     }
@@ -177,187 +177,151 @@ public class MainActivity extends Activity {
 
     void buildPatterns() {
         patterns.put("money", new String[]{
-            "money","cash","payment","send money","give me money","argent",
-            "paiement","payer","فلوس","الفلوس","مال","نقود","درهم","دراهم",
-            "flous","flouss","flos","flooss"
+            "send money","transfer money","pay now","make a payment","payment required",
+            "argent","envoyez de l'argent","virement","paiement urgent","فلوس","صيفط الفلوس",
+            "حول الفلوس","خلص دابا","sift flous","sift lia flous","7wel flous"
         });
         patterns.put("account", new String[]{
-            "account","your account","bank account","compte","ton compte",
-            "mon compte","الحساب","حسابك","حسابك البنكي","كونط","الكونط",
-            "countek","contek","comptek","compte","counte","compte dyalek",
-            "compte dialek","compte diyalk","3tini countek","atini countek",
-            "a3tini countek","3tini comptek","atini comptek"
+            "bank account","account details","bank details","your account will be blocked",
+            "compte bancaire","coordonnees bancaires","ton compte","حسابك البنكي",
+            "معلومات الحساب","عطيني الكونط","3tini countek","atini countek","a3tini comptek"
         });
         patterns.put("send", new String[]{
-            "send","send me","transfer","forward","envoyer","envoyez",
-            "envoie moi","transfert","virement","ارسلي","ارسل لي","حول لي",
-            "صيفط ليا","سيفط ليا","siftli","sift liya","seftli","seft liya",
-            "sifetli","sefetli"
+            "send me","send it to me","transfer to me","forward the code","envoyez moi",
+            "envoie moi","transferez","صيفط ليا","رسل ليا","حول ليا","sift liya","seft liya"
         });
-        patterns.put("personal", new String[]{
-            "password","passcode","pin","otp","code","verification code",
-            "security code","login","username","email","identity","cin",
-            "card number","bank details","mot de passe","code de verification",
-            "كلمة السر","رمز التحقق","كود","المعلومات الشخصية","رقم البطاقة",
-            "password dyalek","code dyalek"
-        });
-        patterns.put("phone", new String[]{
-            "phone number","telephone number","mobile number","numero de telephone",
-            "numero de tel","رقم الهاتف","نوميرو","رقمك","tiliphon","tilifon",
-            "telephone","telephon"
+        patterns.put("credential", new String[]{
+            "password","passcode","one time password","one-time code","verification code",
+            "security code","otp","pin code","card number","mot de passe","code de verification",
+            "كلمة السر","رمز التحقق","كود التحقق","رقم البطاقة","password dyalek","code dyalek"
         });
         patterns.put("prize", new String[]{
-            "you won","winner","prize","reward","gift","free money","lottery",
-            "congratulations","vous avez gagne","cadeau","مبروك","ربحت","جائزة",
-            "هدية","ربح","mabrouk","rbe7ti","rb7ti"
+            "you have won","you won a prize","claim your prize","claim your reward",
+            "free gift card","lottery winner","vous avez gagne","reclamez votre prix",
+            "ربحت جائزة","ربحتي","مبروك ربحت","rbe7ti","rb7ti"
         });
         patterns.put("urgency", new String[]{
-            "urgent","urgently","right now","immediately","hurry","asap",
-            "urgentement","tout de suite","immediatement","vite","عاجل","فورا",
-            "دابا","دابا حالا","بسرعة","الان","خاصك دابا","ضروري دابا",
-            "daba","dghya","dghia","bser3a","darori"
+            "act now","within 24 hours","account will be closed","account will be blocked",
+            "immediately","urgent action required","de toute urgence","tout de suite",
+            "votre compte sera bloque","دابا حالا","خاصك دابا","ضروري دابا","daba","dghya","darori daba"
         });
         patterns.put("secrecy", new String[]{
-            "don't tell anyone","do not tell anyone","keep this secret","secret",
-            "between us","ne le dis a personne","garde le secret","لا تخبر احدا",
-            "لا تقول لحد","خليه سر","خليها سر","بيناتنا","ماتقول لحد",
-            "matgolch","matgoulch","mat9olch","sir binatna"
+            "don't tell anyone","do not tell anyone","keep this secret","keep it between us",
+            "ne le dites a personne","garde le secret","ما تقول لحتى واحد","خليها سر","matgol lta wa7ed"
         });
         patterns.put("remote", new String[]{
-            "anydesk","teamviewer","remote access","remote control",
-            "control your computer","control your phone","screen sharing",
-            "share your screen","acces a distance","controle a distance",
-            "prendre le controle","تحكم عن بعد","دخول عن بعد","التحكم في الهاتف",
-            "التحكم في الحاسوب","شارك الشاشة"
+            "install anydesk","install teamviewer","give me remote access","share your screen",
+            "remote control","acces a distance","prenez le controle","تحكم عن بعد","شارك الشاشة"
         });
-        patterns.put("link", new String[]{
-            "http://","https://","www.","click here","click the link","open this link",
-            "link","clique ici","ouvre ce lien","lien","اضغط هنا","افتح الرابط",
-            "الرابط","لينك"
-        });
-        patterns.put("meeting", new String[]{
-            "meet me","meeting","rendez vous","rejoins moi","viens me voir",
-            "تعال عندي","قابلني","اللقاء","موعد","ntla9aw","ntla9o","ntla9ou",
-            "tl9ani","tla9ani","ji 3ndi"
+        patterns.put("linkAction", new String[]{
+            "click here to verify","click the link to claim","open this link to unlock",
+            "cliquez ici pour verifier","ouvrez ce lien","اضغط هنا للتحقق","دخل للرابط"
         });
         patterns.put("impersonation", new String[]{
-            "i am the bank","i am from the bank","bank employee","customer service",
-            "support team","police","government","your son","your daughter",
-            "your grandson","je suis de la banque","service client","gouvernement",
-            "انا من البنك","خدمة الزبناء","الشرطة","الحكومة","ولدك","بنتك","حفيدك",
-            "ana men banka","ana mn banka"
+            "i am from your bank","this is your bank","bank security team","government agent",
+            "police officer","customer service agent","je suis de votre banque","service client de votre banque",
+            "انا من البنك","خدمة الزبناء ديال البنك","ana mn banka"
         });
     }
 
     String label(String key, int lang) {
-        String[][] x = {
-            {"argent / paiement","المال / الدفع","الفلوس / الخلاص"},
-            {"compte","الحساب","الكونط / الحساب"},
-            {"envoi / transfert","الإرسال / التحويل","السيفط / التحويل"},
-            {"information personnelle","معلومات شخصية","معلومات شخصية"},
-            {"numéro de téléphone","رقم الهاتف","نوميرو ديال التلفون"},
-            {"cadeau / gain","جائزة / ربح","ربح / جائزة"},
-            {"urgence / pression","استعجال / ضغط","الاستعجال / الضغط"},
-            {"secret","سرية","السرية"},
-            {"accès à distance","تحكم عن بعد","التحكم عن بعد"},
-            {"lien","رابط","لينك"},
-            {"rendez-vous","لقاء","اللقاء"},
-            {"usurpation d'identité","انتحال الهوية","انتحال الهوية"}
+        String[][] labels = {
+            {"Money/payment request","Demande d'argent/paiement","طلب المال أو الدفع","طلب الفلوس أو الخلاص"},
+            {"Bank account details","Coordonnées bancaires","معلومات الحساب البنكي","معلومات الكونط البنكي"},
+            {"Request to send something","Demande d'envoi","طلب إرسال شيء","طلب السيفط"},
+            {"Password or verification code","Mot de passe ou code","كلمة السر أو رمز التحقق","password ولا كود التحقق"},
+            {"Prize or reward claim","Promesse de gain","وعد بجائزة","وعد بربح"},
+            {"Urgency or pressure","Urgence ou pression","استعجال أو ضغط","الاستعجال أو الضغط"},
+            {"Secrecy request","Demande de secret","طلب السرية","طلب السرية"},
+            {"Remote access request","Demande d'accès à distance","طلب التحكم عن بعد","طلب التحكم عن بعد"},
+            {"Suspicious link instruction","Instruction liée à un lien","تعليمات حول رابط مشبوه","تعليمات على رابط مشبوه"},
+            {"Possible impersonation","Possible usurpation d'identité","احتمال انتحال الهوية","احتمال انتحال الهوية"}
         };
-        String[] keys = {"money","account","send","personal","phone","prize","urgency","secrecy","remote","link","meeting","impersonation"};
-        for (int i=0;i<keys.length;i++) if(keys[i].equals(key)) return x[i][lang];
+        String[] keys = {"money","account","send","credential","prize","urgency","secrecy","remote","linkAction","impersonation"};
+        for (int i=0;i<keys.length;i++) if (keys[i].equals(key)) return labels[i][lang];
+        if (key.equals("url")) return tr("Web link found","Lien web détecté","تم العثور على رابط","تلقا رابط",lang);
+        if (key.equals("phone")) return tr("Phone number found","Numéro de téléphone détecté","تم العثور على رقم هاتف","تلقا رقم تلفون",lang);
         return key;
     }
 
     void analyze() {
-        String text = message.getText().toString();
+        String text = message.getText().toString().trim();
         int lang = language.getSelectedItemPosition();
-
-        Set<String> found = new LinkedHashSet<>();
-        for (String key : patterns.keySet()) {
-            String[] arr = patterns.get(key);
-            if (has(text, arr)) found.add(key);
+        if (text.isEmpty()) {
+            explanation.setText(tr("Paste a message first.", "Collez d'abord un message.", "ألصق رسالة أولا.", "لسق الميساج اللول.", lang));
+            return;
         }
 
-        if (moneyAmount(text)) found.add("money");
+        Set<String> found = new LinkedHashSet<>();
+        for (String key : patterns.keySet()) if (has(text, patterns.get(key))) found.add(key);
+        if (url(text)) found.add("url");
         if (phone(text)) found.add("phone");
-        if (url(text)) found.add("link");
 
         int s = 0;
         Map<String,Integer> base = new HashMap<>();
-        base.put("money",16); base.put("account",14); base.put("send",14);
-        base.put("personal",17); base.put("phone",8); base.put("prize",14);
-        base.put("urgency",11); base.put("secrecy",13); base.put("remote",18);
-        base.put("link",9); base.put("meeting",8); base.put("impersonation",13);
+        base.put("money",12); base.put("account",18); base.put("send",10);
+        base.put("credential",22); base.put("prize",12); base.put("urgency",12);
+        base.put("secrecy",10); base.put("remote",24); base.put("linkAction",14);
+        base.put("impersonation",16); base.put("url",5); base.put("phone",3);
+        for (String k : found) s += base.getOrDefault(k,0);
 
-        for (String k: found) s += base.getOrDefault(k,0);
+        // Stronger evidence comes from combinations, not ordinary words in isolation.
+        if (found.contains("account") && found.contains("send")) s += 22;
+        if (found.contains("account") && found.contains("credential")) s += 25;
+        if (found.contains("money") && found.contains("urgency")) s += 18;
+        if (found.contains("prize") && found.contains("credential")) s += 24;
+        if (found.contains("impersonation") && (found.contains("account") || found.contains("credential"))) s += 24;
+        if (found.contains("remote") && (found.contains("credential") || found.contains("account"))) s += 28;
+        if (found.contains("linkAction") && (found.contains("credential") || found.contains("account"))) s += 20;
+        if (found.contains("secrecy") && (found.contains("money") || found.contains("credential"))) s += 16;
+        if (found.contains("url") && (found.contains("credential") || found.contains("linkAction"))) s += 12;
+        s = Math.min(s, 100);
 
-        if(found.contains("account") && found.contains("send")) s+=25;
-        if(found.contains("account") && found.contains("money")) s+=24;
-        if(found.contains("account") && found.contains("personal")) s+=24;
-        if(found.contains("money") && found.contains("send")) s+=24;
-        if(found.contains("money") && found.contains("urgency")) s+=22;
-        if(found.contains("money") && found.contains("secrecy")) s+=22;
-        if(found.contains("personal") && found.contains("link")) s+=18;
-        if(found.contains("personal") && found.contains("impersonation")) s+=22;
-        if(found.contains("remote") && found.contains("personal")) s+=28;
-        if(found.contains("remote") && found.contains("account")) s+=26;
-        if(found.contains("prize") && found.contains("money")) s+=24;
-        if(found.contains("secrecy") && found.contains("urgency")) s+=20;
-
-        String n = normalize(text).replace(" ","");
-        if (n.contains(normalize("3tini countek").replace(" ","")) ||
-            n.contains(normalize("atini countek").replace(" ","")) ||
-            n.contains(normalize("a3tini countek").replace(" ",""))) {
-            s += 30;
-            found.add("account");
-        }
-
-        if(found.contains("money") && found.contains("send") && found.contains("account")) s+=20;
-        if(found.contains("money") && found.contains("send") && found.contains("personal")) s+=25;
-        if(found.size() >= 4) s+=10;
-
-        s = Math.min(s,100);
-
-        String level;
-        if(s>=80) level="extreme";
-        else if(s>=60) level="high";
-        else if(s>=35) level="suspicious";
-        else if(s>=15) level="caution";
-        else level="low";
-
-        String[] riskFR={"Risque faible","Prudence","Suspect","Risque élevé","Risque très élevé"};
-        String[] riskAR={"الخطر ضعيف","انتبه","مشبوه","خطر مرتفع","خطر مرتفع جداً"};
-        String[] riskDA={"الخطر ضعيف","رد بالك","مشبوه","خطر كبير","خطر كبير بزاف"};
-        int ri = level.equals("low")?0:level.equals("caution")?1:level.equals("suspicious")?2:level.equals("high")?3:4;
-
-        String rn = lang==0?riskFR[ri]:lang==1?riskAR[ri]:riskDA[ri];
-        risk.setText(rn);
-        score.setText((lang==0?"Points de risque : ":lang==1?"نقط الخطر: ":"نقط الخطر: ")+s);
+        String level = s >= 75 ? "high" : s >= 45 ? "suspicious" : s >= 20 ? "caution" : "low";
+        int ri = level.equals("low") ? 0 : level.equals("caution") ? 1 : level.equals("suspicious") ? 2 : 3;
+        String[] riskNames = {
+            tr("No clear warning signs","Aucun signe évident","لا توجد علامات واضحة","ما بانوش علامات واضحة",lang),
+            tr("Be careful","Soyez prudent","انتبه","رد بالك",lang),
+            tr("Suspicious message","Message suspect","رسالة مشبوهة","ميساج مشبوه",lang),
+            tr("High risk — verify first","Risque élevé — vérifiez d'abord","خطر مرتفع — تحقق أولا","خطر كبير — تأكد اللول",lang)
+        };
+        risk.setText(riskNames[ri]);
+        score.setText(tr("Risk score: ","Points de risque : ","نقط الخطر: ","نقط الخطر: ",lang) + s + "/100");
 
         StringBuilder d = new StringBuilder();
-        d.append(lang==0?"Éléments détectés :\n":lang==1?"العناصر المكتشفة:\n":"الحوايج اللي تلقاو:\n");
-        if(found.isEmpty()) {
-            d.append(lang==0?"Aucun signal évident.":lang==1?"ما بان حتى دليل واضح.":"ما بان حتى شي دليل واضح.");
-        } else {
-            for(String k:found) d.append("• ").append(label(k,lang)).append("\n");
-        }
+        d.append(tr("Signals found:\n","Signaux détectés :\n","العلامات المكتشفة:\n","العلامات اللي تلقات:\n",lang));
+        if (found.isEmpty()) d.append(tr("No obvious suspicious pattern found. This does not prove the message is safe.",
+                "Aucun signal suspect évident. Cela ne prouve pas que le message est sûr.",
+                "لم يتم العثور على نمط مشبوه واضح. هذا لا يعني أن الرسالة آمنة.",
+                "ما تلقاش نمط مشبوه واضح. هادشي ما كيضمنش أن الميساج آمن.",lang));
+        else for (String k : found) d.append("• ").append(label(k,lang)).append("\n");
         detected.setText(d.toString());
 
         String exp;
-        if(s>=60) exp=lang==0?"⚠️ Ne faites pas confiance à ce message sans vérification.":lang==1?"⚠️ لا تثق في هذه الرسالة قبل التحقق منها.":"⚠️ ما تثقش فهاد الميساج حتى تتأكد.";
-        else if(s>=35) exp=lang==0?"⚠️ Ce message présente des signes suspects.":lang==1?"⚠️ هذه الرسالة فيها علامات مشبوهة.":"⚠️ هاد الميساج فيه علامات مشبوهة.";
-        else if(s>=15) exp=lang==0?"⚠️ Soyez prudent.":lang==1?"⚠️ رد بالك.":"⚠️ رد بالك.";
-        else exp=lang==0?"Aucun signe évident d'arnaque détecté.":lang==1?"لم يتم العثور على علامة واضحة للاحتيال.":"ما بان حتى شي دليل واضح ديال النصب.";
+        if (s >= 75) exp = tr("⚠️ Do not follow the instructions until you verify the sender using an official contact method.",
+                "⚠️ Ne suivez pas les instructions avant d'avoir vérifié l'expéditeur par un moyen officiel.",
+                "⚠️ لا تتبع التعليمات قبل التحقق من المرسل عبر وسيلة رسمية.",
+                "⚠️ ما تتبعش التعليمات حتى تتأكد من المرسل بطريقة رسمية.",lang);
+        else if (s >= 45) exp = tr("⚠️ Several warning signs appear together. Verify independently.",
+                "⚠️ Plusieurs signes d'alerte apparaissent ensemble. Vérifiez indépendamment.",
+                "⚠️ ظهرت عدة علامات تحذير معا. تحقق بطريقة مستقلة.",
+                "⚠️ كاينين عدة علامات تحذير مجموعين. تأكد بوحدك.",lang);
+        else if (s >= 20) exp = tr("⚠️ Be careful and check the sender before acting.",
+                "⚠️ Soyez prudent et vérifiez l'expéditeur avant d'agir.",
+                "⚠️ انتبه وتحقق من المرسل قبل التصرف.",
+                "⚠️ رد بالك وتأكد من المرسل قبل ما تدير شي حاجة.",lang);
+        else exp = tr("No strong scam pattern was detected. Stay cautious with unexpected requests.",
+                "Aucun schéma d'arnaque fort détecté. Restez prudent face aux demandes inattendues.",
+                "لم يتم اكتشاف نمط احتيال قوي. كن حذرا من الطلبات غير المتوقعة.",
+                "ما تلقاش نمط قوي ديال النصب. رد بالك من الطلبات المفاجئة.",lang);
         explanation.setText(exp);
 
-        StringBuilder r = new StringBuilder();
-        r.append(lang==0?"Conseil : ne partagez jamais un mot de passe, code OTP ou accès à distance avec quelqu'un qui vous le demande.":
-                 lang==1?"نصيحة: لا تشارك أبداً كلمة السر أو رمز OTP أو التحكم عن بعد مع شخص يطلبها منك.":
-                 "نصيحة: عمرَك تعطي password ولا code OTP ولا accès للتلفون لشي واحد كيطلبهم منك.");
-        reasons.setText(r.toString());
+        reasons.setText(tr("Safety tip: never share passwords, one-time codes, bank details, or remote access. Contact your bank or family through a number you already trust.",
+                "Conseil : ne partagez jamais mot de passe, code à usage unique, coordonnées bancaires ou accès à distance. Contactez votre banque ou votre famille via un numéro déjà fiable.",
+                "نصيحة: لا تشارك كلمة السر أو رموز التحقق أو معلومات البنك أو التحكم عن بعد. اتصل بالبنك أو العائلة برقم موثوق لديك.",
+                "نصيحة: ما تعطيش password ولا كود التحقق ولا معلومات البنك ولا التحكم عن بعد. عيط للبنك أو العائلة برقم كتثق فيه.",lang));
 
-        int c = s>=80?Color.rgb(255,46,109):s>=60?Color.rgb(233,87,87):s>=35?Color.rgb(240,154,67):s>=15?Color.rgb(240,200,75):Color.rgb(69,217,139);
+        int c = s >= 75 ? Color.rgb(255,46,109) : s >= 45 ? Color.rgb(233,87,87) : s >= 20 ? Color.rgb(240,180,67) : Color.rgb(69,217,139);
         risk.setTextColor(c);
     }
 }
